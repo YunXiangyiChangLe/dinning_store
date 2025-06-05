@@ -3,10 +3,14 @@ package com.szg.controller;
 
 import com.szg.dto.LoginFormDTO;
 import com.szg.dto.Result;
+import com.szg.dto.UserDTO;
+import com.szg.entity.User;
 import com.szg.entity.UserInfo;
 import com.szg.service.IUserInfoService;
 import com.szg.service.IUserService;
+import com.szg.utils.UserHolder;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -29,8 +33,8 @@ public class UserController {
      */
     @PostMapping("code")
     public Result sendCode(@RequestParam("phone") String phone, HttpSession session) {
-        // TODO 发送短信验证码并保存验证码
-        return Result.fail("功能未完成");
+        //  发送短信验证码并保存验证码
+        return userService.sendCode(phone,session);
     }
 
     /**
@@ -39,8 +43,8 @@ public class UserController {
      */
     @PostMapping("/login")
     public Result login(@RequestBody LoginFormDTO loginForm, HttpSession session){
-        // TODO 实现登录功能
-        return Result.fail("功能未完成");
+        //  实现登录功能
+        return userService.login(loginForm,session);
     }
 
     /**
@@ -55,8 +59,10 @@ public class UserController {
 
     @GetMapping("/me")
     public Result me(){
-        // TODO 获取当前登录的用户并返回
-        return Result.fail("功能未完成");
+        //  获取当前登录的用户并返回
+        UserDTO userDTO = UserHolder.getUser();
+
+        return Result.ok(userDTO);
     }
 
     @GetMapping("/info/{id}")
