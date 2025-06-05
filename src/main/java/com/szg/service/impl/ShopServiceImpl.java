@@ -27,14 +27,21 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         String key = RedisConstants.CACHE_SHOP_KEY;
         //redis查询缓存
         String shopJson = stringRedisTemplate.opsForValue().get(key + id);
-        if (StrUtil.isNotEmpty(shopJson)) {
+        if (StrUtil.isNotBlank(shopJson)) {
             Shop shop = JSONUtil.toBean(shopJson, Shop.class);
             return Result.ok(shop);
+        }
+        //命中空值，返回结果，不查数据
+        if(shopJson!=null){
+            return Result.fail("店铺不存在！");
         }
 
         //不存在缓存查数据库
         Shop shop = getById(id);
         if (shop == null) {
+            //将空值写入redis，解卷缓存穿透
+            stringRedisTemplate.opsForValue().set(key + id, "",
+                    RedisConstants.CACHE_NULL_TTL, TimeUnit.MINUTES);
             return Result.fail("店铺不存在！");
         }
         stringRedisTemplate.opsForValue().set(key + id, JSONUtil.toJsonStr(shop),
