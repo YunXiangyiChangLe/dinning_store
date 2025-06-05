@@ -1,5 +1,6 @@
 package com.szg.config;
 
+import com.szg.utils.RefreshTokenInterceptor;
 import com.szg.utils.loginInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -12,9 +13,10 @@ import javax.annotation.Resource;
 public class MvcConfig implements WebMvcConfigurer {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new loginInterceptor(stringRedisTemplate))
+        registry.addInterceptor(new loginInterceptor())
                 .excludePathPatterns(
                         "/blog/hot",
                         "/shop/**",
@@ -23,6 +25,9 @@ public class MvcConfig implements WebMvcConfigurer {
                         "voucher/**",
                         "/user/code",
                         "/user/login"
-                );
+                ).order(1);
+
+        registry.addInterceptor(new RefreshTokenInterceptor(stringRedisTemplate))
+                .addPathPatterns("/**").order(0);
     }
 }
