@@ -9,6 +9,7 @@ import com.szg.entity.Shop;
 import com.szg.mapper.ShopMapper;
 import com.szg.service.IShopService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.szg.utils.CacheClient;
 import com.szg.utils.RedisConstants;
 import com.szg.utils.RedisData;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -27,16 +28,24 @@ import java.util.concurrent.TimeUnit;
 public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IShopService {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+    @Resource
+    private CacheClient cacheClient;
 
     @Override
     public Result queryById(Long id) {
         //缓存穿透
-//        Shop shop=queryWithPassThrough(id);
+//        Shop shop=cacheClient.queryWithPassThrough(
+//                RedisConstants.CACHE_SHOP_KEY,id,Shop.class,id2->getById(id),
+//                RedisConstants.CACHE_SHOP_TTL,TimeUnit.MINUTES
+//        );
 
 //        互斥锁解决缓存击穿
 //        Shop shop = queryWithMutex(id);
         //逻辑过期解决缓存击穿问题
-        Shop shop = queryWithLogicalExpire(id);
+        Shop shop = cacheClient.queryWithLogicalExpire(
+                RedisConstants.CACHE_SHOP_KEY,id,Shop.class,this::getById,
+                RedisConstants.CACHE_SHOP_TTL,TimeUnit.MINUTES
+        );
         if (shop == null) {
             return Result.fail("店铺不存在！？");
         }
