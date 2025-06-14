@@ -1,5 +1,6 @@
 package com.szg;
 
+import com.szg.entity.Shop;
 import com.szg.entity.User;
 import com.szg.mapper.UserMapper;
 import com.szg.service.IUserService;
@@ -9,13 +10,16 @@ import com.szg.utils.RedisIdWorker;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.data.geo.Point;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import javax.annotation.Resource;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -41,6 +45,24 @@ class HeimaDianpingApplicationTests {
 
     private ExecutorService executorService = Executors.newFixedThreadPool(500);
 
+
+    @Test
+    void loadShopData(){
+        List<Shop> list = shopService.list();
+        Map<Long,List<Shop>>map=list.stream().collect(
+                Collectors.groupingBy(Shop::getTypeId)
+        );
+        for(Map.Entry<Long,List<Shop>>entry:map.entrySet()){
+            Long shopId = entry.getKey();
+            String key="shop:geo:"+shopId;
+            List<Shop> shops = entry.getValue();
+            for (Shop shop : shops) {
+                stringRedisTemplate.opsForGeo()
+                        .add(key,new Point(shop.getX(),shop.getY()),shop.getId().toString());
+            }
+        }
+
+    }
     @Test
     void testSaveDate() throws InterruptedException {
         CountDownLatch countDownLatch = new CountDownLatch(300);
